@@ -1,0 +1,38 @@
+name: Docker CI
+
+on:
+  push:
+    branches:
+      - master
+
+env:
+  DOCKER_HUB_USER: ${{ secrets.DOCKER_HUB_USER }}
+  DOCKER_HUB_TOKEN: ${{ secrets.DOCKER_HUB_TOKEN }}
+  IMAGE_NAME: whyreason/curcash 
+
+jobs:
+  build-and-deploy:
+    runs-on: [self-hosted, windows]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Login to Docker Hub
+        run: docker login -u ${{ secrets.DOCKER_HUB_USER }} -p ${{ secrets.DOCKER_HUB_TOKEN }}
+
+      - name: Build Docker image
+        run: |
+          docker build -t ${{ env.IMAGE_NAME }}:latest .
+          docker tag ${{ env.IMAGE_NAME }}:latest ${{ env.IMAGE_NAME }}:$(git rev-parse --short HEAD)
+
+      - name: Push Docker image
+        run: |
+          docker push ${{ env.IMAGE_NAME }}:latest
+          docker push ${{ env.IMAGE_NAME }}:$(git rev-parse --short HEAD)
+
+      - name: Run new container
+        run: |
+          # Пытаемся остановить старый контейнер, если он запущен
+          docker stop curcash || true
+          docker rm curcash || true
+          docker run -d -p 3000:3000 --name curcash ${{ env.IMAGE_NAME }}:latest
