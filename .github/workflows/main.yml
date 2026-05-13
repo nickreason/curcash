@@ -3,7 +3,7 @@ name: Docker CI
 on:
   push:
     branches:
-      - master
+      - main
 
 env:
   DOCKER_HUB_USER: ${{ secrets.DOCKER_HUB_USER }}
