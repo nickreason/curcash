@@ -32,7 +32,8 @@ jobs:
 
       - name: Run new container
         run: |
-          # Пытаемся остановить старый контейнер, если он запущен
-          docker stop curcash || true
-          docker rm curcash || true
+          $stopContainer = docker ps -q --filter "name=curcash"
+          if ($stopContainer) { docker stop curcash }
+          $oldContainer = docker ps -aq --filter "name=curcash"
+          if ($oldContainer) { docker rm curcash }
           docker run -d -p 3000:3000 --name curcash ${{ env.IMAGE_NAME }}:latest
